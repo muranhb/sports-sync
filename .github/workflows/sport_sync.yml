@@ -1,7 +1,3 @@
-name: sport_sync.yml
-on:
-
-jobs:
 name: Sport Data Sync Hub
 
 on:
