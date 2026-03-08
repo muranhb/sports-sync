@@ -5,10 +5,10 @@ import os
 import traceback
 from collections import namedtuple
 
-from config import TCX_FOLDER, OUTPUT_DIR, FIT_FOLDER, KEEP2GARMIN_BK_PATH
-from keep_sync import KEEP_SPORT_TYPES, get_all_keep_tracks
-from garmin_sync import Garmin
-from tcx2fit import TCX2FITConverter
+from config.config import TCX_FOLDER, OUTPUT_DIR, FIT_FOLDER, KEEP2GARMIN_BK_PATH
+from keep.keep_sync import KEEP_SPORT_TYPES, get_all_keep_tracks
+from garmin.garmin_sync import Garmin
+from tools.tcx2fit import TCX2FITConverter
 
 
 def run_keep_to_garmin_sync(email, password, keep_sports_data_api):
