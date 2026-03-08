@@ -1,0 +1,77 @@
+name: sport_sync.yml
+on:
+
+jobs:
+name: Sport Data Sync Hub
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * *" # UTC时间 18:00 (北京时间凌晨 2:00) 自动执行
+
+jobs:
+  sync_keep_to_garmin:
+    runs-on: ubuntu-latest
+    name: Sync Keep to Garmin
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # 安装同步功能所需的所有底层依赖包
+          pip install garth fit-tool gpxpy tcxreader geopy httpx polyline requests eviltransform pytz lxml
+          # 如果你有 requirements.txt 也会一并执行
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Dynamic Secret Fetch & Run Sync
+        env:
+          KEEP_PHONE: ${{ secrets.KEEP_PHONE }}
+          KEEP_PASSWORD: ${{ secrets.KEEP_PASSWORD }}
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          GARMIN_IS_CN: ${{ secrets.GARMIN_IS_CN }} # 配置为 true 或 false
+        run: |
+          # 1. 使用官方凭证脚本获取最新的 Secret，规避 Token 过期
+          echo "Authenticating with Garmin..."
+          if [ "$GARMIN_IS_CN" = "true" ]; then
+            GARMIN_SECRET=$(python get_garmin_secret.py "$GARMIN_EMAIL" "$GARMIN_PASSWORD" --is-cn)
+            GARMIN_FLAG="--is-cn"
+          else
+            GARMIN_SECRET=$(python get_garmin_secret.py "$GARMIN_EMAIL" "$GARMIN_PASSWORD")
+            GARMIN_FLAG=""
+          fi
+          
+          if [ -z "$GARMIN_SECRET" ] || [[ "$GARMIN_SECRET" == *"Exception"* ]]; then
+            echo "❌ 佳明登录失败，未能获取到 Secret!"
+            exit 1
+          fi
+
+          # 2. 运行主要的转换和上传任务
+          echo "Starting Data Sync Route: Keep -> Garmin"
+          python keep_to_garmin_sync.py "$KEEP_PHONE" "$KEEP_PASSWORD" "$GARMIN_SECRET" $GARMIN_FLAG --sync-types running hiking cycling
+
+      - name: Commit Sync State
+        run: |
+          # 3. 将本地去重的缓存 JSON 推送到 Github 记录，避免每次全部重跑
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          
+          # 只添加轻量级的 json 文件
+          git add keep2garmin.json
+          
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-sync: Update Keep->Garmin sync records [skip ci]"
+            git push
+          else
+            echo "No new activities synced today."
+          fi
