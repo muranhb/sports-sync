@@ -57,7 +57,31 @@ class Garmin:
         if auth_domain and str(auth_domain).upper() == "CN":
             garth.configure(domain="garmin.cn", ssl_verify=False)
         self.modern_url = self.URL_DICT.get("MODERN_URL")
-        garth.client.loads(secret_string)
+        
+        # ================== 增加的调试信息 START ==================
+        print("\n" + "="*50)
+        print("DEBUG INFO: Check secret_string before parsing")
+        print(f"Type: {type(secret_string)}")
+        
+        if not secret_string:
+            print("WARNING: secret_string is empty or None!")
+        else:
+            print(f"Length: {len(secret_string)}")
+            # 打印前100个字符的 raw 格式，防止超长字符串刷屏，同时能看清头部是否有污染
+            print(f"Raw prefix (first 100 chars): {repr(secret_string[:100])}")
+            # 打印后50个字符的 raw 格式，检查尾部是否有回车或异常字符
+            print(f"Raw suffix (last 50 chars): {repr(secret_string[-50:])}")
+        print("="*50 + "\n")
+        # ================== 增加的调试信息 END ==================
+
+        try:
+            garth.client.loads(secret_string)
+        except Exception as e:
+            # 如果解析失败，把完整的原始字符串打印出来（注意：这会在 Actions 日志中暴露 token，排查完记得清理或重置密码）
+            print(f"\n[CRITICAL ERROR] Failed to load secret_string: {e}")
+            print(f"Full corrupted secret_string repr: {repr(secret_string)}\n")
+            raise  # 抛出异常，中止运行
+
         if garth.client.oauth2_token.expired:
             garth.client.refresh_oauth2()
 
@@ -70,7 +94,6 @@ class Garmin:
         self.is_only_running = is_only_running
         self.upload_url = self.URL_DICT.get("UPLOAD_URL")
         self.activity_url = self.URL_DICT.get("ACTIVITY_URL")
-
     async def fetch_data(self, url, retrying=False):
         try:
             response = await self.req.get(url, headers=self.headers)
