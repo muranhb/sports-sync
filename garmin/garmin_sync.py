@@ -12,6 +12,7 @@ import sys
 import time
 import traceback
 import zipfile
+import urllib3
 from io import BytesIO
 from lxml import etree
 
@@ -20,6 +21,8 @@ import garth
 import httpx
 from config.config import FOLDER_DICT
 from garmin.garmin_device_adaptor import process_garmin_data
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
