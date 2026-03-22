@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # 安装同步功能所需的所有底层依赖包
-          pip install garth fit-tool gpxpy tcxreader geopy httpx polyline requests eviltransform pytz lxml
+          pip install git+https://github.com/yihong0618/garth.git fit-tool gpxpy tcxreader geopy httpx polyline requests eviltransform pytz lxml
           # 如果你有 requirements.txt 也会一并执行
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
