@@ -1930,5 +1930,11 @@
     "name": "Workout from keep",
     "type": "Workout",
     "tcx_file_path": "/home/runner/work/MuransSportsSync/MuransSportsSync/outputs/TCX_OUT/9223370261629828997.tcx"
+  },
+  {
+    "run_id": 9223370261549392807,
+    "name": "Walk from keep",
+    "type": "Walk",
+    "tcx_file_path": "/home/runner/work/MuransSportsSync/MuransSportsSync/outputs/TCX_OUT/9223370261549392807.tcx"
   }
 ]
